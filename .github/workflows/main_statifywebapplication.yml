@@ -60,5 +60,5 @@ jobs:
         with:
           app-name: 'StatifyWebApplication'
           slot-name: 'Production'
-          package: '*.jar'
+          package: './SpotifyJavaProject/LoginSystem/target/*.jar'
           

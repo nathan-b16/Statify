@@ -29,5 +29,5 @@ A full-stack web application that handles user authentication and processes pers
 
 ### Prerequisites
 
-*   Java 17+ and Maven
+*   Java 21+ and Maven
 *   A Spotify Developer account with Client ID and Client Secret.

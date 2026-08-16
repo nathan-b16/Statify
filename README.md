@@ -2,7 +2,7 @@
 
 A full-stack web application that handles user authentication and processes personal Spotify metrics to deliver insights into your listening habits.
 
-https://statify-web-app-fqbeeyb3gsedc9a4.israelcentral-01.azurewebsites.net/
+<a href='https://statify-web-app-fqbeeyb3gsedc9a4.israelcentral-01.azurewebsites.net/'>Statify Website</a>
 ## 🚀 Tech Stack
 
 *   **Frontend:** HTML + CSS + Charts.js

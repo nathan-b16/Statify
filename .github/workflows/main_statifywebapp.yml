@@ -11,9 +11,9 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -25,21 +25,22 @@ jobs:
           distribution: 'microsoft'
 
       - name: Build with Maven
-        run: mvn clean install
+        run: mvn clean package -DskipTests
+        working-directory: ./SpotifyJavaProject/LoginSystem
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}/target/*.jar'
+          path: '${{ github.workspace }}/SpotifyJavaProject/LoginSystem/target/*.jar'
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-  
+      id-token: write 
+      contents: read
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
@@ -49,15 +50,14 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7BA68EC65A1C46A880F72D4E6EE2943C }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F8133B9E7E18448CA21531904B45E891 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_63D81B17846A48FD9C3F2EC0C5A1421A }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_40E647F182B14DB0B759907740A3B9C4 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A4D3A042E7634550B62C1AA8C1412839 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F654012A135B45F6BBB26249420AA4D2 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'StatifyWebApp'
+          app-name: 'StatifyWebApplication'
           slot-name: 'Production'
-          package: '*.jar'
-          
+          package: '**/*.jar'

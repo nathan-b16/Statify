@@ -1,0 +1,61 @@
+
+name: Build and deploy JAR app to Azure Web App - StatifyWebApplication
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java version
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+        working-directory: ./SpotifyJavaProject/LoginSystem
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-app
+          path: '${{ github.workspace }}/SpotifyJavaProject/LoginSystem/target/*.jar'
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    permissions:
+      id-token: write 
+      contents: read
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: java-app
+      
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_40E647F182B14DB0B759907740A3B9C4 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A4D3A042E7634550B62C1AA8C1412839 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F654012A135B45F6BBB26249420AA4D2 }}
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'StatifyWebApplication'
+          slot-name: 'Production'
+          package: '**/*.jar'

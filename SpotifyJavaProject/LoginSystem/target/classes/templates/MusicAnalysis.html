@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Music Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --bg-card: #121212;
+            --bg-hover: #27272a;
+            --green: #1db954;
+            --text-main: #ffffff;
+            --text-muted: #b3b3b3;
+            --text-bg: #a1a1aa;
+            --border-color: #282828;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Circular Sp", "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        h2 {
+            color: var(--green);
+            font-size: 2.5rem;
+            letter-spacing: -1px;
+            text-align: center;
+            padding: 40px 0 10px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .analysis-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            max-width: 500px;
+            margin: 0 auto 30px;
+            transition: background-color 0.3s;
+        }
+
+        .analysis-card:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-bg);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            color: var(--green);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+        }
+
+        .chart-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        footer {
+            margin-top: 60px;
+            padding: 20px;
+            color: var(--text-bg);
+            text-align: center;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Music Analysis</h2>
+<p class="subtitle">Find out what kind of listener you are</p>
+
+<div class="analysis-card">
+    <div class="stat-label">Mood</div>
+    <div class="stat-value" th:text="${mood}"></div>
+
+    <div class="stat-label">Danceability</div>
+    <div class="stat-value" th:text="${danceabilityStr}"></div>
+
+    <div class="stat-label">Tempo</div>
+    <div class="stat-value" th:text="${tempo}"></div>
+</div>
+
+<div class="analysis-card" style="max-width: 100%;">
+    <div class="stat-label">Track Features Breakdown</div>
+    <div style="overflow-x: auto; width: 100%;">
+        <div id="chartContainer" style="height: 400px; min-width: 800px;">
+            <canvas id="trackFeaturesBarChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<footer>© Created by Nathan | 2026</footer>
+
+<script th:inline="javascript">
+    const trackNames   = /*[[${trackNames}]]*/ [];
+    const valence      = /*[[${valence}]]*/ [];
+    const energy       = /*[[${energy}]]*/ [];
+    const danceability = /*[[${danceability}]]*/ [];
+
+    const barCtx = document.getElementById('trackFeaturesBarChart').getContext('2d');
+    const barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: trackNames,
+            datasets: [
+                {
+                    label: 'Valence',
+                    data: valence,
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Energy',
+                    data: energy,
+                    backgroundColor: 'rgba(29, 185, 84, 0.6)',
+                    borderColor: 'rgba(29, 185, 84, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Danceability',
+                    data: danceability,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                ticks: {
+                 color: '#ffffff',
+                maxRotation: 90,
+                minRotation: 45
+                 }
+                 },
+                y: {
+                    beginAtZero: true,
+                    max: 1,
+                    ticks: { color: '#ffffff' }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

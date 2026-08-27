@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Recommendations</title>
+</head>
+<body>
+
+<h1>Based on your current listening tracks</h1>
+<p>Here are some tracks we thought you would like</p>
+
+<p th:if="${success}" th:text="${success}" class="msg-success"></p>
+<p th:if="${error}" th:text="${error}" class="msg-error"></p>
+
+<div class="playlist-panel">
+    <div class="playlist-create">
+        <h3>Create new playlist</h3>
+        <form th:action="@{/playlist/create}" method="post" class="create-form">
+            <input type="text" name="name" placeholder="Playlist name..." required />
+            <button type="submit">Create</button>
+        </form>
+    </div>
+
+    <div class="playlist-select">
+        <h3>Select playlist to add tracks to</h3>
+        <select id="playlistSelect" class="playlist-dropdown">
+            <option value="">Select a playlist...</option>
+            <option th:each="pl : ${playlists}"
+                    th:value="${pl.id}"
+                    th:text="${pl.name}">
+            </option>
+        </select>
+    </div>
+</div>
+
+<ul>
+    <li th:each="track : ${recommendations}" class="track-card">
+        <img th:src="${track.imageUrl != null} ? ${track.imageUrl}"
+             class="track-image" alt="Track cover" />
+        <div class="track-info">
+            <h3 th:text="${track.artists[0].name}"></h3>
+            <p th:text="${track.trackTitle}"></p>
+        </div>
+        <form th:action="@{/playlist/add}" method="post" class="add-form">
+            <input type="hidden" name="trackId" th:value="${track.id}" />
+            <input type="hidden" name="playlistId" class="hidden-playlist-id" />
+            <button type="submit" class="add-btn"
+                    onclick="this.previousElementSibling.value = document.getElementById('playlistSelect').value">
+                + Add to Playlist
+            </button>
+        </form>
+    </li>
+</ul>
+<footer>© Created by Nathan | 2026</footer>
+<style>
+    :root {
+        --bg-dark: #09090b;
+        --bg-card: #121212;
+        --bg-hover: #27272a;
+        --green: #1db954;
+        --text-main: #ffffff;
+        --text-bg: #a1a1aa;
+        --border-color: #282828;
+        --text-muted: #b3b3b3;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: "Circular Sp", "Segoe UI", Roboto, sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        line-height: 1.5;
+        padding: 20px;
+    }
+
+    h1 { color: var(--green); font-size: 2.5rem; letter-spacing: -1px; text-align: center; padding: 40px 0 10px; }
+    h1 + p { color: var(--text-muted); text-align: center; margin-bottom: 2rem; }
+
+    .msg-success { color: var(--green); text-align: center; margin-bottom: 1rem; }
+    .msg-error   { color: #f87171;      text-align: center; margin-bottom: 1rem; }
+
+    .playlist-panel {
+        display: flex;
+        gap: 24px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 2rem;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .playlist-panel h3 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .create-form {
+        display: flex;
+        gap: 8px;
+    }
+
+    .create-form input,
+    .playlist-dropdown {
+        background: var(--bg-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: var(--text-main);
+        font-size: 13px;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+
+    .create-form input:focus,
+    .playlist-dropdown:focus { border-color: var(--green); }
+
+    .create-form button {
+        padding: 8px 16px;
+        background: var(--green);
+        color: #000;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+
+    .create-form button:hover { opacity: 0.85; }
+
+    .playlist-dropdown {
+        min-width: 200px;
+        cursor: pointer;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .track-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 16px;
+        padding: 10px 16px 10px 10px;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .track-card:hover {
+        background-color: var(--bg-hover);
+        border-color: #3f3f46;
+    }
+
+    .track-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+        flex-shrink: 0;
+    }
+
+    .track-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .track-card h3 {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-main);
+        margin: 0 0 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .track-card p {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .add-btn {
+        flex-shrink: 0;
+        padding: 7px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        color: var(--text-main);
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .add-btn:hover {
+        background: var(--green);
+        border-color: var(--green);
+        color: #000;
+    }
+    footer {
+      margin-top: 60px;
+      padding: 20px;
+      color: var(--text-bg);
+      text-align: center;
+      font-size: 0.8rem;
+    }
+</style>
+
+</body>
+</html>

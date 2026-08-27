@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Analysis</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            corePlugins: { preflight: false },
+            important: false
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --bg-card: #121212;
+            --bg-hover: #27272a;
+            --green: #1db954;
+            --text-main: #ffffff;
+            --text-muted: #b3b3b3;
+            --text-bg: #a1a1aa;
+            --border-color: #282828;
+        }
+
+        body {
+            font-family: "Circular Sp", "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+        }
+
+        /* nav */
+        .site-nav {
+            position: sticky;
+            top: 0;
+            background-color: rgba(9, 9, 11, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+        }
+        .site-nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+        .site-nav a:hover, .site-nav a.active { color: var(--green); }
+
+        /* cards */
+        .dark-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+        .dark-card:hover { background-color: var(--bg-hover); transition: background-color 0.2s; }
+
+        /* track row */
+        .track-row {
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.15s;
+        }
+        .track-row:last-child { border-bottom: none; }
+        .track-row:hover { background-color: var(--bg-hover); border-radius: 8px; }
+
+        /* insight section */
+        .insight-section {
+            background: linear-gradient(135deg, #0f1f14 0%, var(--bg-card) 100%);
+            border: 1px solid #1db95430;
+            border-radius: 12px;
+        }
+
+        /* chart container */
+        #radarChart { max-height: 340px; }
+
+        footer { color: var(--text-bg); }
+    </style>
+</head>
+<body>
+
+<!-- ── Nav (matches dashboard) ── -->
+<nav class="site-nav py-4">
+    <div class="container d-flex justify-content-center gap-5">
+        <a th:href="@{/TopTracks}">Top Tracks</a>
+        <a th:href="@{/Recommendation}">Recommendation</a>
+        <a th:href="@{/MusicAnalysis}" class="active">Music Analysis</a>
+    </div>
+</nav>
+
+<!-- ── Header ── -->
+<header class="text-center py-5">
+    <h1 class="text-4xl font-bold" style="color: var(--green);">
+        <i class="bi bi-bar-chart-fill me-2"></i>Music Analysis
+    </h1>
+    <p class="mt-2" style="color: var(--text-muted);">A look at who you are through what you play</p>
+</header>
+
+<main class="container pb-5" style="max-width: 860px;">
+
+    <!-- ── AI Insight ── -->
+    <section class="insight-section p-4 p-md-5 mb-4">
+        <!-- label -->
+        <p class="text-uppercase fw-semibold mb-3"
+           style="font-size: 0.7rem; letter-spacing: 2px; color: var(--green);">
+            Your Sound, In Words
+        </p>
+
+        <!-- insight available -->
+        <div th:if="${insight != null}">
+            <p class="fs-6 lh-lg" style="color: var(--text-main);" th:text="${insight}"></p>
+        </div>
+
+        <!-- insight unavailable -->
+        <div th:if="${insight == null}"
+             class="d-flex align-items-start gap-3"
+             style="color: var(--text-muted);">
+            <i class="bi bi-cloud-slash fs-4 flex-shrink-0 mt-1"></i>
+            <p class="mb-0">
+                The AI description isn't available right now — the quota may be exhausted.
+                Your tracks and sound profile are still shown below.
+            </p>
+        </div>
+    </section>
+
+    <!-- ── Two-column: Chart + Track list ── -->
+    <div class="row g-4 mb-4" th:if="${tracks != null and !tracks.isEmpty()}">
+
+        <!-- Radar chart -->
+        <div class="col-lg-5">
+            <div class="dark-card p-4 h-100">
+                <p class="text-uppercase fw-semibold mb-3"
+                   style="font-size: 0.7rem; letter-spacing: 2px; color: var(--green);">
+                    Sound Profile
+                </p>
+                <canvas id="radarChart"></canvas>
+                <p class="text-center mt-3" style="font-size: 0.78rem; color: var(--text-muted);">
+                    Avg tempo:
+                    <span class="fw-bold" style="color: var(--text-main);"
+                          th:text="${audioStats['Avg BPM']} + ' BPM'"></span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Track list -->
+        <div class="col-lg-7">
+            <div class="dark-card p-4 h-100">
+                <p class="text-uppercase fw-semibold mb-3"
+                   style="font-size: 0.7rem; letter-spacing: 2px; color: var(--green);">
+                    Top Tracks
+                </p>
+                <div th:each="track, iter : ${tracks}" class="track-row d-flex align-items-center gap-3 py-2 px-2">
+                    <!-- rank -->
+                    <span class="fw-bold flex-shrink-0"
+                          style="width: 22px; font-size: 0.85rem; color: var(--text-muted);"
+                          th:text="${iter.count}"></span>
+                    <!-- art -->
+                    <img th:if="${track.album != null and track.album.images != null and track.album.images.length > 0}"
+                         th:src="${track.album.images[0].url}" th:alt="${track.name}"
+                         class="rounded flex-shrink-0"
+                         style="width: 42px; height: 42px; object-fit: cover;" />
+                    <div th:if="${track.album == null or track.album.images == null or track.album.images.length == 0}"
+                         class="rounded flex-shrink-0 d-flex align-items-center justify-content-center"
+                         style="width: 42px; height: 42px; background: var(--bg-hover); font-size: 1.1rem;">
+                        🎵
+                    </div>
+                    <!-- info -->
+                    <div class="flex-grow-1 overflow-hidden">
+                        <p class="mb-0 fw-semibold text-truncate" style="font-size: 0.9rem;"
+                           th:text="${track.name}"></p>
+                        <p class="mb-0 text-truncate" style="font-size: 0.78rem; color: var(--text-muted);"
+                           th:text="${track.artists != null and track.artists.length > 0} ? ${track.artists[0].name} : 'Unknown'"></p>
+                    </div>
+                    <!-- popularity pill -->
+                    <span class="badge rounded-pill flex-shrink-0"
+                          style="background: #1db95420; color: var(--green); font-size: 0.72rem;"
+                          th:text="${track.popularity}"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Empty state ── -->
+    <div class="dark-card text-center p-5"
+         th:if="${tracks == null or tracks.isEmpty()}">
+        <i class="bi bi-music-note-beamed fs-2 mb-3 d-block" style="color: var(--text-muted);"></i>
+        <p style="color: var(--text-muted);">
+            No listening data yet — log in with Spotify and come back.
+        </p>
+    </div>
+
+    <!-- ── Back link ── -->
+    <div class="mt-4">
+        <a th:href="@{/mydashboard}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
+            <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+        </a>
+    </div>
+
+</main>
+
+<footer class="text-center py-4" style="font-size: 0.8rem;">
+    © Created by Nathan | 2026
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ── Chart.js radar ── -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const audioStats = /*[[${audioStats}]]*/ {};
+
+    // Pull the 7 radar axes (everything except Avg BPM)
+    const radarKeys   = ['Energy','Danceability','Valence','Acousticness','Instrumentalness','Liveness','Speechiness'];
+    const radarValues = radarKeys.map(k => audioStats[k] != null ? audioStats[k] : 0);
+
+    const ctx = document.getElementById('radarChart');
+    if (ctx && radarValues.some(v => v > 0)) {
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: radarKeys,
+                datasets: [{
+                    label: 'Your Sound',
+                    data: radarValues,
+                    backgroundColor: 'rgba(29, 185, 84, 0.15)',
+                    borderColor: '#1db954',
+                    pointBackgroundColor: '#1db954',
+                    pointBorderColor: '#09090b',
+                    pointHoverBackgroundColor: '#fff',
+                    pointRadius: 4,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 1,
+                        ticks: {
+                            display: false,
+                            stepSize: 0.25
+                        },
+                        grid: { color: '#282828' },
+                        angleLines: { color: '#282828' },
+                        pointLabels: {
+                            color: '#b3b3b3',
+                            font: { size: 11 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ' ' + (ctx.raw * 100).toFixed(0) + '%'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    /*]]>*/
+</script>
+
+</body>
+</html>

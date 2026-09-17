@@ -1,9 +1,6 @@
 services:
   - type: web
     name: statify
-    runtime: java
-    buildCommand: cd LoginSystem && chmod +x mvnw && ./mvnw clean package -DskipTests
-    startCommand: java -jar LoginSystem/target/LoginSystem-0.0.1-SNAPSHOT.jar
-    envVars:
-      - key: JAVA_VERSION
-        value: 21
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .

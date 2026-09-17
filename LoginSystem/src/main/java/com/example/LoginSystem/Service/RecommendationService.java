@@ -1,9 +1,11 @@
 package com.example.LoginSystem.Service;
 
+import com.example.LoginSystem.Auth.SpotifyAuthService;
 import com.example.LoginSystem.DTO.RecommendationDTO;
 import com.example.LoginSystem.DTO.RecommendationWrapper;
 import com.example.LoginSystem.Model.Track.TrackEntity;
 import com.example.LoginSystem.Repo.TrackRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -17,25 +19,31 @@ import se.michaelthelin.spotify.requests.authorization.client_credentials.Client
 import java.util.ArrayList;
 import java.util.List;
 
+
+@RequiredArgsConstructor
 @Service
 public class RecommendationService {
-    @Autowired
-    TrackRepository trackRepository;
 
-    @Autowired
-    SpotifyApi spotifyApi;
+    private final TrackRepository trackRepository;
+    private final SpotifyAuthService authService;
 
     private final WebClient webClient = WebClient.builder()
             .baseUrl("https://api.reccobeats.com/v1")
             .build();
 
     @Cacheable(value = "recommendations")
-    public List<RecommendationDTO> TrackReccomendation() {
+    public List<RecommendationDTO>  TrackReccomendation() {
         List<TrackEntity> tracks = trackRepository.findAll();
         List<RecommendationDTO> recommendations = new ArrayList<>();
-        refreshSpotifyToken();
 
         if (tracks.isEmpty()) {
+            return recommendations;
+        }
+        SpotifyApi spotifyApi = null;
+        try {
+            spotifyApi = authService.appLevelApi();
+        }catch (Exception e) {
+            System.err.println("Failed to get spotify app token:" + e.getMessage());
             return recommendations;
         }
         TrackEntity seed = tracks.getFirst();
@@ -48,7 +56,7 @@ public class RecommendationService {
 
             if (response != null && response.getContent() != null) {
                 for (RecommendationDTO dto : response.getContent()) {
-                    fetchSpotifyData(dto.getIsrc(), dto);
+                    fetchSpotifyData(spotifyApi,dto.getIsrc(), dto);
                     recommendations.add(dto);
                 }
             }
@@ -59,7 +67,7 @@ public class RecommendationService {
         return recommendations;
     }
 
-    private void fetchSpotifyData(String isrc, RecommendationDTO dto) {
+    private void fetchSpotifyData(SpotifyApi spotifyApi,String isrc, RecommendationDTO dto) {
         try {
             Track[] tracks = spotifyApi.searchTracks("isrc:" + isrc)
                     .build()
@@ -75,16 +83,6 @@ public class RecommendationService {
             }
         } catch (Exception e) {
             System.err.println("fetch failed: " + e.getMessage());
-        }
-    }
-
-    private void refreshSpotifyToken() {
-        try {
-            ClientCredentialsRequest request = spotifyApi.clientCredentials().build();
-            ClientCredentials credentials = request.execute();
-            spotifyApi.setAccessToken(credentials.getAccessToken());
-        } catch (Exception e) {
-            System.err.println("Token refresh failed: " + e.getMessage());
         }
     }
 }

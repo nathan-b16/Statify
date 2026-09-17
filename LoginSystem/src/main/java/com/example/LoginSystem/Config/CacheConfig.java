@@ -6,6 +6,8 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.session.web.http.CookieSerializer;
+import org.springframework.session.web.http.DefaultCookieSerializer;
 
 import java.util.concurrent.TimeUnit;
 
@@ -21,4 +23,17 @@ public class CacheConfig {
                 .maximumSize(100));
         return cacheManager;
     }
+
+    @Bean
+    public CookieSerializer cookieSerializer() {
+        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
+        serializer.setCookieName("SESSION");
+        serializer.setCookiePath("/");
+        serializer.setUseHttpOnlyCookie(true);
+        serializer.setUseSecureCookie(false);
+        serializer.setSameSite("Lax");
+        return serializer;
+    }
+
+
 }

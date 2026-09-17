@@ -20,11 +20,10 @@ public class SpotifyConfig {
     private String redirectUri;
 
     @Bean
-    public SpotifyApi spotifyApi() {
+    public SpotifyApi.Builder spotifyApiBuilder() {
         return new SpotifyApi.Builder()
                 .setClientId(clientId)
                 .setClientSecret(clientSecret)
-                .setRedirectUri(SpotifyHttpManager.makeUri(redirectUri))
-                .build();
+                .setRedirectUri(SpotifyHttpManager.makeUri(redirectUri));
     }
 }

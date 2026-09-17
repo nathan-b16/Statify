@@ -21,7 +21,6 @@ public class TrackService {
     @Autowired
     TopItemServiceImpl spotifyService;
 
-    @Async
     public void fetchAndSaveTracks(String token) throws Exception
     {
         trackRepository.deleteAll();

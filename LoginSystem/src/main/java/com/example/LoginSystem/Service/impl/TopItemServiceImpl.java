@@ -1,7 +1,8 @@
 package com.example.LoginSystem.Service.impl;
 
+import com.example.LoginSystem.Auth.SpotifyAuthService;
 import com.example.LoginSystem.Service.TopItemService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -11,10 +12,10 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class TopItemServiceImpl implements TopItemService {
 
-    @Autowired
-    SpotifyApi spotifyApi;
+    private final SpotifyAuthService authService;
 
     private <T> List<T> fetchTopItems(IRequest<Paging<T>> request) {
         try {
@@ -26,6 +27,7 @@ public class TopItemServiceImpl implements TopItemService {
 
     @Override
     public List<Artist> getTopArtists(String accessToken) {
+        SpotifyApi spotifyApi = authService.apiFor(accessToken);
         return fetchTopItems(
                 spotifyApi.getUsersTopArtists()
                         .limit(5)
@@ -37,6 +39,7 @@ public class TopItemServiceImpl implements TopItemService {
 
     @Override
     public List<Track> getTopTracks(String accessToken) {
+        SpotifyApi spotifyApi = authService.apiFor(accessToken);
         return fetchTopItems(
                 spotifyApi.getUsersTopTracks()
                         .limit(5)
@@ -47,6 +50,7 @@ public class TopItemServiceImpl implements TopItemService {
 
     @Cacheable(value = "TopTracksOfAlTime")
     public List<Track> getTopTracksOfAlTime(String accessToken) {
+        SpotifyApi spotifyApi = authService.apiFor(accessToken);
         return fetchTopItems(
                 spotifyApi.getUsersTopTracks()
                         .limit(50)
@@ -57,6 +61,7 @@ public class TopItemServiceImpl implements TopItemService {
 
     @Override
     public List<Track> getTopTracksForDB(String accessToken) {
+        SpotifyApi spotifyApi = authService.apiFor(accessToken);
         return fetchTopItems(
                 spotifyApi.getUsersTopTracks()
                         .limit(20)
